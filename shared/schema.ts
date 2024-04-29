@@ -78,3 +78,6 @@ export const gameRoomSchema = z.object({
 
 export type Player = z.infer<typeof playerSchema>;
 export type GameRoom = z.infer<typeof gameRoomSchema>;
+
+// Export zod instance for type inference
+export { z };
