@@ -1,0 +1,503 @@
+import pygame
+import sys
+import socket
+import threading
+import json
+from enum import Enum
+
+# Game States
+class GameState(Enum):
+    MAIN_MENU = 0
+    WAITING_FOR_CONNECTION = 1
+    GAME_SELECTION = 2
+    PLAYING = 3
+
+class Game:
+    """Base class for all games in the hub"""
+    def __init__(self, screen):
+        self.screen = screen
+        self.running = True
+        
+    def handle_event(self, event):
+        if event.type == pygame.QUIT:
+            self.running = False
+        
+    def update(self):
+        pass
+        
+    def render(self):
+        pass
+        
+    def run(self):
+        clock = pygame.time.Clock()
+        while self.running:
+            for event in pygame.event.get():
+                self.handle_event(event)
+                
+            self.update()
+            self.render()
+            
+            pygame.display.flip()
+            clock.tick(60)
+        
+        return GameState.GAME_SELECTION
+
+class PongGame(Game):
+    """Simple Pong game implementation"""
+    def __init__(self, screen, is_host, connection):
+        super().__init__(screen)
+        self.width, self.height = screen.get_size()
+        self.is_host = is_host
+        self.connection = connection
+        
+        # Game objects
+        self.paddle_width = 15
+        self.paddle_height = 100
+        self.paddle_speed = 8
+        
+        # Initialize paddles
+        if is_host:
+            self.player_paddle = pygame.Rect(50, self.height//2 - self.paddle_height//2, 
+                                     self.paddle_width, self.paddle_height)
+            self.opponent_paddle = pygame.Rect(self.width - 50 - self.paddle_width, 
+                                      self.height//2 - self.paddle_height//2,
+                                      self.paddle_width, self.paddle_height)
+        else:
+            self.player_paddle = pygame.Rect(self.width - 50 - self.paddle_width, 
+                                     self.height//2 - self.paddle_height//2,
+                                     self.paddle_width, self.paddle_height)
+            self.opponent_paddle = pygame.Rect(50, self.height//2 - self.paddle_height//2, 
+                                      self.paddle_width, self.paddle_height)
+        
+        # Ball properties
+        self.ball_size = 15
+        self.ball = pygame.Rect(self.width//2 - self.ball_size//2, 
+                       self.height//2 - self.ball_size//2,
+                       self.ball_size, self.ball_size)
+        self.ball_speed_x = 7 * (1 if is_host else -1)
+        self.ball_speed_y = 7
+        
+        # Scoring
+        self.player_score = 0
+        self.opponent_score = 0
+        self.font = pygame.font.Font(None, 74)
+        
+        # Network communication thread
+        self.receive_thread = threading.Thread(target=self.receive_data)
+        self.receive_thread.daemon = True
+        self.receive_thread.start()
+        
+    def handle_event(self, event):
+        super().handle_event(event)
+        
+    def update(self):
+        # Handle paddle movement
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_UP] and self.player_paddle.top > 0:
+            self.player_paddle.y -= self.paddle_speed
+        if keys[pygame.K_DOWN] and self.player_paddle.bottom < self.height:
+            self.player_paddle.y += self.paddle_speed
+            
+        # Send paddle position to opponent
+        try:
+            data = {
+                "paddle_y": self.player_paddle.y
+            }
+            self.connection.send(json.dumps(data).encode())
+        except:
+            pass
+            
+        # Update ball if host
+        if self.is_host:
+            # Ball movement
+            self.ball.x += self.ball_speed_x
+            self.ball.y += self.ball_speed_y
+            
+            # Ball collision with top and bottom
+            if self.ball.top <= 0 or self.ball.bottom >= self.height:
+                self.ball_speed_y *= -1
+                
+            # Ball collision with paddles
+            if self.ball.colliderect(self.player_paddle) or self.ball.colliderect(self.opponent_paddle):
+                self.ball_speed_x *= -1
+                
+            # Ball out of bounds
+            if self.ball.left <= 0:
+                self.opponent_score += 1
+                self.reset_ball()
+            elif self.ball.right >= self.width:
+                self.player_score += 1
+                self.reset_ball()
+                
+            # Send ball position to opponent
+            try:
+                data = {
+                    "paddle_y": self.player_paddle.y,
+                    "ball_x": self.ball.x,
+                    "ball_y": self.ball.y,
+                    "player_score": self.player_score,
+                    "opponent_score": self.opponent_score
+                }
+                self.connection.send(json.dumps(data).encode())
+            except:
+                pass
+    
+    def reset_ball(self):
+        self.ball.center = (self.width//2, self.height//2)
+        self.ball_speed_x *= -1
+    
+    def receive_data(self):
+        while self.running:
+            try:
+                data = self.connection.recv(1024).decode()
+                if data:
+                    game_data = json.loads(data)
+                    self.opponent_paddle.y = game_data.get("paddle_y", self.opponent_paddle.y)
+                    
+                    if not self.is_host and "ball_x" in game_data:
+                        self.ball.x = game_data["ball_x"]
+                        self.ball.y = game_data["ball_y"]
+                        self.player_score = game_data["opponent_score"]
+                        self.opponent_score = game_data["player_score"]
+            except:
+                continue
+    
+    def render(self):
+        # Clear screen
+        self.screen.fill((0, 0, 0))
+        
+        # Draw middle line
+        pygame.draw.aaline(self.screen, (200, 200, 200), 
+                         (self.width//2, 0), (self.width//2, self.height))
+        
+        # Draw paddles
+        pygame.draw.rect(self.screen, (200, 200, 200), self.player_paddle)
+        pygame.draw.rect(self.screen, (200, 200, 200), self.opponent_paddle)
+        
+        # Draw ball
+        pygame.draw.ellipse(self.screen, (200, 200, 200), self.ball)
+        
+        # Draw scores
+        player_text = self.font.render(str(self.player_score), True, (200, 200, 200))
+        opponent_text = self.font.render(str(self.opponent_score), True, (200, 200, 200))
+        
+        self.screen.blit(player_text, (self.width//4, 20))
+        self.screen.blit(opponent_text, (3*self.width//4, 20))
+
+class TicTacToeGame(Game):
+    """Simple Tic-Tac-Toe game implementation"""
+    def __init__(self, screen, is_host, connection):
+        super().__init__(screen)
+        self.width, self.height = screen.get_size()
+        self.is_host = is_host
+        self.connection = connection
+        
+        # Game state
+        self.board = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]  # 0=empty, 1=X, 2=O
+        self.current_player = 1  # X starts
+        self.cell_size = min(self.width, self.height) // 3
+        self.game_over = False
+        self.winner = 0
+        
+        # Player assignment (host is X, client is O)
+        self.player_piece = 1 if is_host else 2
+        
+        # Network communication thread
+        self.receive_thread = threading.Thread(target=self.receive_data)
+        self.receive_thread.daemon = True
+        self.receive_thread.start()
+        
+    def handle_event(self, event):
+        super().handle_event(event)
+        
+        if event.type == pygame.MOUSEBUTTONDOWN and not self.game_over:
+            # Only allow moves when it's the player's turn
+            if self.current_player == self.player_piece:
+                x, y = event.pos
+                col = x // self.cell_size
+                row = y // self.cell_size
+                
+                if col < 3 and row < 3 and self.board[row][col] == 0:
+                    self.board[row][col] = self.player_piece
+                    self.current_player = 2 if self.current_player == 1 else 1
+                    
+                    # Send move to opponent
+                    try:
+                        data = {
+                            "move": [row, col],
+                            "piece": self.player_piece
+                        }
+                        self.connection.send(json.dumps(data).encode())
+                    except:
+                        pass
+                        
+                    self.check_winner()
+    
+    def check_winner(self):
+        # Check rows
+        for row in self.board:
+            if row[0] != 0 and row[0] == row[1] == row[2]:
+                self.game_over = True
+                self.winner = row[0]
+                return
+                
+        # Check columns
+        for col in range(3):
+            if self.board[0][col] != 0 and self.board[0][col] == self.board[1][col] == self.board[2][col]:
+                self.game_over = True
+                self.winner = self.board[0][col]
+                return
+                
+        # Check diagonals
+        if self.board[0][0] != 0 and self.board[0][0] == self.board[1][1] == self.board[2][2]:
+            self.game_over = True
+            self.winner = self.board[0][0]
+            return
+            
+        if self.board[0][2] != 0 and self.board[0][2] == self.board[1][1] == self.board[2][0]:
+            self.game_over = True
+            self.winner = self.board[0][2]
+            return
+            
+        # Check for draw
+        draw = True
+        for row in self.board:
+            for cell in row:
+                if cell == 0:
+                    draw = False
+                    break
+        
+        if draw:
+            self.game_over = True
+    
+    def receive_data(self):
+        while self.running:
+            try:
+                data = self.connection.recv(1024).decode()
+                if data:
+                    game_data = json.loads(data)
+                    if "move" in game_data:
+                        row, col = game_data["move"]
+                        piece = game_data["piece"]
+                        self.board[row][col] = piece
+                        self.current_player = 2 if self.current_player == 1 else 1
+                        self.check_winner()
+            except:
+                continue
+    
+    def render(self):
+        # Clear screen
+        self.screen.fill((0, 0, 0))
+        
+        # Draw grid
+        for i in range(1, 3):
+            pygame.draw.line(self.screen, (200, 200, 200), 
+                           (0, i * self.cell_size), (self.width, i * self.cell_size), 2)
+            pygame.draw.line(self.screen, (200, 200, 200), 
+                           (i * self.cell_size, 0), (i * self.cell_size, self.height), 2)
+        
+        # Draw X's and O's
+        for row in range(3):
+            for col in range(3):
+                x = col * self.cell_size + self.cell_size // 2
+                y = row * self.cell_size + self.cell_size // 2
+                
+                if self.board[row][col] == 1:  # X
+                    pygame.draw.line(self.screen, (255, 0, 0), 
+                                   (x - self.cell_size//3, y - self.cell_size//3),
+                                   (x + self.cell_size//3, y + self.cell_size//3), 5)
+                    pygame.draw.line(self.screen, (255, 0, 0), 
+                                   (x + self.cell_size//3, y - self.cell_size//3),
+                                   (x - self.cell_size//3, y + self.cell_size//3), 5)
+                elif self.board[row][col] == 2:  # O
+                    pygame.draw.circle(self.screen, (0, 0, 255), (x, y), 
+                                     self.cell_size//3, 5)
+        
+        # Game status
+        font = pygame.font.Font(None, 36)
+        if self.game_over:
+            if self.winner == self.player_piece:
+                text = font.render("You win!", True, (0, 255, 0))
+            elif self.winner != 0:
+                text = font.render("You lose!", True, (255, 0, 0))
+            else:
+                text = font.render("Draw!", True, (200, 200, 200))
+        else:
+            if self.current_player == self.player_piece:
+                text = font.render("Your turn", True, (0, 255, 0))
+            else:
+                text = font.render("Opponent's turn", True, (200, 200, 200))
+                
+        self.screen.blit(text, (10, self.height - 40))
+
+class GamingHub:
+    def __init__(self):
+        pygame.init()
+        self.width, self.height = 800, 600
+        self.screen = pygame.display.set_mode((self.width, self.height))
+        pygame.display.set_caption("2D Gaming Hub")
+        
+        self.clock = pygame.time.Clock()
+        self.state = GameState.MAIN_MENU
+        
+        # Network properties
+        self.is_host = False
+        self.connection = None
+        self.host_socket = None
+        
+        # Available games
+        self.games = {
+            "Pong": PongGame,
+            "Tic-Tac-Toe": TicTacToeGame
+        }
+        self.selected_game = None
+        
+        # Fonts
+        self.title_font = pygame.font.Font(None, 64)
+        self.menu_font = pygame.font.Font(None, 36)
+        
+    def run(self):
+        running = True
+        
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                else:
+                    self.handle_event(event)
+            
+            self.update()
+            self.render()
+            
+            pygame.display.flip()
+            self.clock.tick(60)
+            
+        # Clean up
+        if self.connection:
+            self.connection.close()
+        if self.host_socket:
+            self.host_socket.close()
+        pygame.quit()
+        sys.exit()
+    
+    def handle_event(self, event):
+        if self.state == GameState.MAIN_MENU:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = event.pos
+                
+                # Host Game button
+                if 300 <= x <= 500 and 200 <= y <= 250:
+                    self.start_hosting()
+                    
+                # Join Game button
+                elif 300 <= x <= 500 and 300 <= y <= 350:
+                    self.join_game()
+                    
+        elif self.state == GameState.GAME_SELECTION:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = event.pos
+                
+                # Check if a game was clicked
+                y_pos = 200
+                for game_name in self.games:
+                    if 300 <= x <= 500 and y_pos <= y <= y_pos + 50:
+                        self.selected_game = game_name
+                        self.start_game()
+                        break
+                    y_pos += 100
+    
+    def update(self):
+        pass
+    
+    def render(self):
+        self.screen.fill((0, 0, 0))
+        
+        if self.state == GameState.MAIN_MENU:
+            # Draw title
+            title = self.title_font.render("2D Gaming Hub", True, (255, 255, 255))
+            self.screen.blit(title, (self.width//2 - title.get_width()//2, 100))
+            
+            # Draw buttons
+            pygame.draw.rect(self.screen, (50, 50, 150), (300, 200, 200, 50))
+            pygame.draw.rect(self.screen, (50, 150, 50), (300, 300, 200, 50))
+            
+            # Button text
+            host_text = self.menu_font.render("Host Game", True, (255, 255, 255))
+            join_text = self.menu_font.render("Join Game", True, (255, 255, 255))
+            
+            self.screen.blit(host_text, (400 - host_text.get_width()//2, 215))
+            self.screen.blit(join_text, (400 - join_text.get_width()//2, 315))
+            
+        elif self.state == GameState.WAITING_FOR_CONNECTION:
+            # Show waiting message
+            wait_text = self.menu_font.render("Waiting for opponent to connect...", True, (255, 255, 255))
+            self.screen.blit(wait_text, (self.width//2 - wait_text.get_width()//2, self.height//2))
+            
+        elif self.state == GameState.GAME_SELECTION:
+            # Draw title
+            title = self.title_font.render("Select a Game", True, (255, 255, 255))
+            self.screen.blit(title, (self.width//2 - title.get_width()//2, 100))
+            
+            # Draw game options
+            y_pos = 200
+            for game_name in self.games:
+                pygame.draw.rect(self.screen, (50, 100, 150), (300, y_pos, 200, 50))
+                game_text = self.menu_font.render(game_name, True, (255, 255, 255))
+                self.screen.blit(game_text, (400 - game_text.get_width()//2, y_pos + 15))
+                y_pos += 100
+    
+    def start_hosting(self):
+        self.is_host = True
+        self.state = GameState.WAITING_FOR_CONNECTION
+        
+        # Create socket
+        self.host_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.host_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.host_socket.bind(('0.0.0.0', 5555))
+        self.host_socket.listen(1)
+        
+        # Accept connection in a separate thread
+        threading.Thread(target=self.accept_connection).start()
+    
+    def accept_connection(self):
+        self.connection, addr = self.host_socket.accept()
+        print(f"Connection from {addr}")
+        
+        # Move to game selection
+        self.state = GameState.GAME_SELECTION
+    
+    def join_game(self):
+        self.is_host = False
+        
+        # Try to connect to host
+        try:
+            self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            # For local testing, connect to localhost
+            host_ip = input("Enter host IP address: ")
+            self.connection.connect((host_ip, 5555))
+            self.state = GameState.GAME_SELECTION
+        except Exception as e:
+            print(f"Connection error: {e}")
+            self.state = GameState.MAIN_MENU
+    
+    def start_game(self):
+        if self.selected_game and self.connection:
+            game_class = self.games[self.selected_game]
+            game = game_class(self.screen, self.is_host, self.connection)
+            
+            # Tell opponent which game was selected
+            try:
+                data = {
+                    "game": self.selected_game
+                }
+                self.connection.send(json.dumps(data).encode())
+            except:
+                pass
+                
+            self.state = GameState.PLAYING
+            new_state = game.run()
+            self.state = new_state
+
+if __name__ == "__main__":
+    hub = GamingHub()
+    hub.run()
