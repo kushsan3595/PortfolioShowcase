@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { createServer } from "http";
 
 const app = express();
 app.use(express.json());
@@ -62,6 +63,7 @@ app.use((req, res, next) => {
   const PORT = process.env.PORT || 5000;
   server.listen(PORT, () => {
     log(`Server is running on port ${PORT}`);
+    log(`WebSocket server is running at ws://localhost:${PORT}/ws`);
   });
 })();
 

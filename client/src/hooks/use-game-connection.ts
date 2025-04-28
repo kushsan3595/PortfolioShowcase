@@ -41,11 +41,13 @@ export default function useGameConnection({ user, roomId }: UseGameConnectionPro
         userId: user.id
       }));
       
-      // Join room
-      ws.send(JSON.stringify({
-        type: 'join_room',
-        roomId
-      }));
+      // Join room if roomId is provided
+      if (roomId) {
+        ws.send(JSON.stringify({
+          type: 'join_room',
+          roomId
+        }));
+      }
     };
     
     ws.onclose = () => {
@@ -58,6 +60,7 @@ export default function useGameConnection({ user, roomId }: UseGameConnectionPro
       }
       
       reconnectTimeoutRef.current = setTimeout(() => {
+        console.log('Attempting to reconnect...');
         connectWebSocket();
       }, 2000);
     };

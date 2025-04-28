@@ -6,8 +6,84 @@ import { z } from "zod";
 import { setUpWebSocketServer } from "./websocket";
 import expressSession from "express-session";
 import MemoryStore from "memorystore";
+import express from 'express';
+import { createGame, getGameById, getAllGames, recordGameHistory, getUserGameHistory } from './game';
+import { registerUser, loginUser } from './auth';
 
-export async function registerRoutes(app: Express): Promise<Server> {
+const router = express.Router();
+
+// Auth routes
+router.post('/auth/register', async (req, res) => {
+  try {
+    const user = await registerUser(req.body);
+    res.json(user);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.post('/auth/login', async (req, res) => {
+  try {
+    const user = await loginUser(req.body);
+    res.json(user);
+  } catch (error) {
+    res.status(401).json({ error: error.message });
+  }
+});
+
+// Game routes
+router.post('/games', async (req, res) => {
+  try {
+    const { name, description, maxPlayers, imageUrl } = req.body;
+    const game = await createGame(name, description, maxPlayers, imageUrl);
+    res.json(game);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/games/:id', async (req, res) => {
+  try {
+    const game = await getGameById(parseInt(req.params.id));
+    if (!game) {
+      return res.status(404).json({ error: 'Game not found' });
+    }
+    res.json(game);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/games', async (req, res) => {
+  try {
+    const games = await getAllGames();
+    res.json(games);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Game history routes
+router.post('/game-history', async (req, res) => {
+  try {
+    const { gameId, winnerId, playerIds, score } = req.body;
+    const history = await recordGameHistory(gameId, winnerId, playerIds, score);
+    res.json(history);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/users/:userId/game-history', async (req, res) => {
+  try {
+    const history = await getUserGameHistory(parseInt(req.params.userId));
+    res.json(history);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
   
   // Set up session middleware
@@ -191,6 +267,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Set up WebSocket server for game communication
   setUpWebSocketServer(httpServer, storage);
+  
+  app.use('/api', router);
   
   return httpServer;
 }
