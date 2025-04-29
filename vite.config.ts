@@ -64,7 +64,8 @@ export default defineConfig({
       jsxImportSource: 'react',
       target: 'esnext',
       treeShaking: true,
-      format: 'esm'
+      format: 'esm',
+      platform: 'browser'
     }
   },
   esbuild: {
@@ -76,7 +77,8 @@ export default defineConfig({
     jsxImportSource: 'react',
     target: 'esnext',
     treeShaking: true,
-    format: 'esm'
+    format: 'esm',
+    platform: 'browser'
   },
   server: {
     port: 3000,
