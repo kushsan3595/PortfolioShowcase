@@ -23,6 +23,7 @@ export default defineConfig({
         manualChunks: {
           vendor: ["react", "react-dom"],
           shared: ["@shared/schema"],
+          ui: ["@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu", "@radix-ui/react-slot", "@radix-ui/react-toast"],
         },
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
