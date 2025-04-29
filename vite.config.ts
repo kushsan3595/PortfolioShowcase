@@ -22,6 +22,7 @@ export default defineConfig({
       "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
     },
+    preserveSymlinks: true
   },
   root: path.resolve(import.meta.dirname, "client"),
   build: {
@@ -29,6 +30,9 @@ export default defineConfig({
     emptyOutDir: true,
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
+      input: {
+        main: path.resolve(import.meta.dirname, "client", "index.html")
+      },
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom'],
@@ -38,8 +42,7 @@ export default defineConfig({
             '@radix-ui/react-slot',
             '@radix-ui/react-toast'
           ],
-          'utils-vendor': ['zod', 'drizzle-orm', 'drizzle-zod'],
-          'shared': ['@shared']
+          'utils-vendor': ['zod', 'drizzle-orm', 'drizzle-zod']
         },
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
@@ -59,7 +62,8 @@ export default defineConfig({
     include: ['react', 'react-dom'],
     exclude: ['@shared'],
     esbuildOptions: {
-      target: 'esnext'
+      target: 'esnext',
+      preserveSymlinks: true
     }
   },
   server: {
