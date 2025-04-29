@@ -3,17 +3,18 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 
 export default defineConfig({
+  root: 'client',
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": path.resolve(__dirname, "./client/src"),
       "@shared": path.resolve(__dirname, "./shared"),
-      "@assets": path.resolve(__dirname, "./src/assets"),
+      "@assets": path.resolve(__dirname, "./client/src/assets"),
     },
     extensions: [".mjs", ".js", ".ts", ".jsx", ".tsx", ".json"],
   },
   build: {
-    outDir: "dist",
+    outDir: "../dist/client",
     emptyOutDir: true,
     chunkSizeWarningLimit: 1000,
     sourcemap: false,
@@ -36,8 +37,13 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    include: ["react", "react-dom", "@shared/schema"],
-    exclude: ["pg"],
+    include: ["react", "react-dom"],
+    exclude: ["@shared/schema"],
+    esbuildOptions: {
+      loader: {
+        '.ts': 'ts',
+      },
+    },
   },
   esbuild: {
     loader: "ts",
