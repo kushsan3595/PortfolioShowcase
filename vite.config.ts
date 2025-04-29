@@ -47,12 +47,24 @@ export default defineConfig({
       }
     },
     minify: 'terser',
-    sourcemap: true,
+    sourcemap: process.env.NODE_ENV === 'development',
     target: 'esnext',
-    cssCodeSplit: true
+    cssCodeSplit: true,
+    reportCompressedSize: true,
+    commonjsOptions: {
+      include: [/node_modules/]
+    }
   },
   optimizeDeps: {
     include: ['react', 'react-dom'],
-    exclude: ['@shared']
+    exclude: ['@shared'],
+    esbuildOptions: {
+      target: 'esnext'
+    }
+  },
+  server: {
+    port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
+    host: '0.0.0.0',
+    strictPort: true
   }
 });
