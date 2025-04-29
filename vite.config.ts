@@ -31,11 +31,29 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-slot'],
-          'utils-vendor': ['zod', 'drizzle-orm', 'drizzle-zod']
-        }
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-vendor': [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-slot',
+            '@radix-ui/react-toast'
+          ],
+          'utils-vendor': ['zod', 'drizzle-orm', 'drizzle-zod'],
+          'socket-vendor': ['socket.io-client'],
+          'shared': ['@shared']
+        },
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
       }
-    }
+    },
+    minify: 'terser',
+    sourcemap: true,
+    target: 'esnext',
+    cssCodeSplit: true
   },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom', 'socket.io-client'],
+    exclude: ['@shared']
+  }
 });

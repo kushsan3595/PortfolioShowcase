@@ -1,7 +1,8 @@
 import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Database Tables
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -29,7 +30,7 @@ export const gameHistory = pgTable("game_history", {
   playedAt: timestamp("played_at").defaultNow()
 });
 
-// Insert schemas
+// Insert Schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -46,17 +47,22 @@ export const insertGameHistorySchema = createInsertSchema(gameHistory).pick({
   score: true
 });
 
+// Select Schemas
+export const selectUserSchema = createSelectSchema(users);
+export const selectGameSchema = createSelectSchema(games);
+export const selectGameHistorySchema = createSelectSchema(gameHistory);
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export type User = z.infer<typeof selectUserSchema>;
 
 export type InsertGame = z.infer<typeof insertGameSchema>;
-export type Game = typeof games.$inferSelect;
+export type Game = z.infer<typeof selectGameSchema>;
 
 export type InsertGameHistory = z.infer<typeof insertGameHistorySchema>;
-export type GameHistory = typeof gameHistory.$inferSelect;
+export type GameHistory = z.infer<typeof selectGameHistorySchema>;
 
-// Lobby and room related types (not stored in database)
+// Lobby and Room Schemas
 export const playerSchema = z.object({
   id: z.number(),
   username: z.string(),
@@ -76,8 +82,25 @@ export const gameRoomSchema = z.object({
   createdAt: z.number()
 });
 
+// Lobby and Room Types
 export type Player = z.infer<typeof playerSchema>;
 export type GameRoom = z.infer<typeof gameRoomSchema>;
+
+// Validation Schemas
+export const createRoomSchema = z.object({
+  gameId: z.number(),
+  name: z.string().min(1).max(50),
+  maxPlayers: z.number().min(2).max(10),
+  isPrivate: z.boolean().optional()
+});
+
+export const joinRoomSchema = z.object({
+  roomId: z.string(),
+  player: playerSchema
+});
+
+export type CreateRoom = z.infer<typeof createRoomSchema>;
+export type JoinRoom = z.infer<typeof joinRoomSchema>;
 
 // Export zod instance for type inference
 export { z };
