@@ -3,7 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { createServer } from "http";
 import { drizzle } from "drizzle-orm/node-postgres";
-import pg from "pg";
+const pg = require('pg');
 const { Pool } = pg;
 
 const app = express();
