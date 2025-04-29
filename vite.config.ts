@@ -21,7 +21,8 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
-    }
+    },
+    extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
   },
   root: path.resolve(import.meta.dirname, "client"),
   build: {
@@ -54,7 +55,7 @@ export default defineConfig({
     cssCodeSplit: true,
     reportCompressedSize: true,
     commonjsOptions: {
-      include: [/node_modules/]
+      include: [/node_modules/, /shared/]
     }
   },
   optimizeDeps: {
@@ -63,7 +64,8 @@ export default defineConfig({
     esbuildOptions: {
       target: 'esnext',
       loader: {
-        '.ts': 'ts'
+        '.ts': 'ts',
+        '.tsx': 'tsx'
       }
     }
   },
