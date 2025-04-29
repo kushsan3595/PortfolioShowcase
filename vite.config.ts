@@ -19,10 +19,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
-      "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
-    },
-    preserveSymlinks: true
+      "@shared/schema": path.resolve(import.meta.dirname, "shared", "schema.ts")
+    }
   },
   root: path.resolve(import.meta.dirname, "client"),
   build: {
@@ -62,8 +61,7 @@ export default defineConfig({
     include: ['react', 'react-dom'],
     exclude: ['@shared'],
     esbuildOptions: {
-      target: 'esnext',
-      preserveSymlinks: true
+      target: 'esnext'
     }
   },
   server: {
