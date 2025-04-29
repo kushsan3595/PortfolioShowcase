@@ -19,8 +19,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
+      "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
-      "@shared/schema": path.resolve(import.meta.dirname, "shared", "schema.ts")
     }
   },
   root: path.resolve(import.meta.dirname, "client"),
@@ -61,7 +61,10 @@ export default defineConfig({
     include: ['react', 'react-dom'],
     exclude: ['@shared'],
     esbuildOptions: {
-      target: 'esnext'
+      target: 'esnext',
+      loader: {
+        '.ts': 'ts'
+      }
     }
   },
   server: {
