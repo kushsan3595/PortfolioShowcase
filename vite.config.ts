@@ -20,10 +20,8 @@ export default defineConfig({
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
-      "@shared/schema": path.resolve(import.meta.dirname, "shared", "schema.ts"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
-    },
-    extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
+    }
   },
   root: path.resolve(import.meta.dirname, "client"),
   build: {
@@ -65,8 +63,7 @@ export default defineConfig({
     esbuildOptions: {
       target: 'esnext',
       loader: {
-        '.ts': 'ts',
-        '.tsx': 'tsx'
+        '.ts': 'ts'
       }
     }
   },
