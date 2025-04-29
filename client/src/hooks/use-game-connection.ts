@@ -62,7 +62,7 @@ export default function useGameConnection({ user, roomId }: UseGameConnectionPro
       reconnectTimeoutRef.current = setTimeout(() => {
         console.log('Attempting to reconnect...');
         connectWebSocket();
-      }, 2000);
+      }, 2000); // 2 seconds delay
     };
     
     ws.onerror = (error) => {
