@@ -1,10 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
-import { runtimeErrorOverlay } from "./src/utils/runtimeErrorOverlay";
 
 export default defineConfig({
-  plugins: [react(), runtimeErrorOverlay()],
+  plugins: [react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
