@@ -9,15 +9,11 @@ export default defineConfig({
       plugins: [
         ['@babel/plugin-transform-react-jsx', { 
           runtime: 'automatic',
-          importSource: 'react',
-          throwIfNamespace: false,
-          useBuiltIns: true
+          importSource: 'react'
         }]
       ],
       babelrc: false,
-      configFile: false,
-      compact: true,
-      comments: false
+      configFile: false
     }
   })],
   resolve: {
@@ -63,39 +59,8 @@ export default defineConfig({
       jsxDev: false,
       jsxImportSource: 'react',
       target: 'esnext',
-      treeShaking: true,
       format: 'esm',
-      platform: 'browser',
-      supported: {
-        'top-level-await': true,
-        'dynamic-import': true,
-        'import-meta': true,
-        'class-fields': true,
-        'class-static-blocks': true,
-        'private-methods': true,
-        'private-properties': true
-      }
-    }
-  },
-  esbuild: {
-    include: /\.(ts|tsx)$/,
-    exclude: /node_modules/,
-    loader: 'tsx',
-    jsx: 'automatic',
-    jsxDev: false,
-    jsxImportSource: 'react',
-    target: 'esnext',
-    treeShaking: true,
-    format: 'esm',
-    platform: 'browser',
-    supported: {
-      'top-level-await': true,
-      'dynamic-import': true,
-      'import-meta': true,
-      'class-fields': true,
-      'class-static-blocks': true,
-      'private-methods': true,
-      'private-properties': true
+      platform: 'browser'
     }
   },
   server: {
