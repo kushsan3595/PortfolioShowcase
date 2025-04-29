@@ -9,9 +9,9 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "client/src"),
       "@shared": path.resolve(__dirname, "shared"),
-      "@assets": path.resolve(__dirname, "client/src/assets"),
+      "@assets": path.resolve(__dirname, "client/src/assets")
     },
-    extensions: [".mjs", ".js", ".ts", ".jsx", ".tsx", ".json"],
+    extensions: [".mjs", ".js", ".ts", ".jsx", ".tsx", ".json"]
   },
   build: {
     outDir: "dist",
@@ -24,12 +24,12 @@ export default defineConfig({
         manualChunks: {
           vendor: ["react", "react-dom"],
           shared: ["@shared/schema"],
-          ui: ["@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu", "@radix-ui/react-slot", "@radix-ui/react-toast"],
+          ui: ["@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu", "@radix-ui/react-slot", "@radix-ui/react-toast"]
         },
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]'
-      },
+      }
     },
     commonjsOptions: {
       include: [/node_modules/, /shared/],
@@ -41,9 +41,9 @@ export default defineConfig({
     exclude: ["@shared/schema"],
     esbuildOptions: {
       loader: {
-        '.ts': 'ts',
-      },
-    },
+        '.ts': 'ts'
+      }
+    }
   },
   esbuild: {
     loader: "ts",
@@ -54,7 +54,7 @@ export default defineConfig({
     port: 3000,
     strictPort: true,
     hmr: {
-      port: 3000,
-    },
-  },
+      port: 3000
+    }
+  }
 });
