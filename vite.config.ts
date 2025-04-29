@@ -10,12 +10,14 @@ export default defineConfig({
         ['@babel/plugin-transform-react-jsx', { 
           runtime: 'automatic',
           importSource: 'react',
-          throwIfNamespace: false
+          throwIfNamespace: false,
+          useBuiltIns: true
         }]
       ],
       babelrc: false,
       configFile: false,
-      compact: true
+      compact: true,
+      comments: false
     }
   })],
   resolve: {
@@ -61,7 +63,8 @@ export default defineConfig({
       jsxDev: false,
       jsxImportSource: 'react',
       target: 'esnext',
-      treeShaking: true
+      treeShaking: true,
+      format: 'esm'
     }
   },
   esbuild: {
@@ -72,7 +75,8 @@ export default defineConfig({
     jsxDev: false,
     jsxImportSource: 'react',
     target: 'esnext',
-    treeShaking: true
+    treeShaking: true,
+    format: 'esm'
   },
   server: {
     port: 3000,
