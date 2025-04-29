@@ -49,7 +49,8 @@ export default defineConfig({
   esbuild: {
     include: /\.(ts|tsx)$/,
     exclude: /node_modules/,
-    loader: 'tsx'
+    loader: 'tsx',
+    jsx: 'automatic'
   },
   server: {
     port: 3000,
