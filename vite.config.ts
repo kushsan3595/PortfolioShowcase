@@ -65,7 +65,10 @@ export default defineConfig({
       target: 'esnext',
       treeShaking: true,
       format: 'esm',
-      platform: 'browser'
+      platform: 'browser',
+      supported: {
+        'top-level-await': true
+      }
     }
   },
   esbuild: {
@@ -78,7 +81,10 @@ export default defineConfig({
     target: 'esnext',
     treeShaking: true,
     format: 'esm',
-    platform: 'browser'
+    platform: 'browser',
+    supported: {
+      'top-level-await': true
+    }
   },
   server: {
     port: 3000,
