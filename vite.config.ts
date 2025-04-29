@@ -69,7 +69,11 @@ export default defineConfig({
       supported: {
         'top-level-await': true,
         'dynamic-import': true,
-        'import-meta': true
+        'import-meta': true,
+        'class-fields': true,
+        'class-static-blocks': true,
+        'private-methods': true,
+        'private-properties': true
       }
     }
   },
@@ -87,7 +91,11 @@ export default defineConfig({
     supported: {
       'top-level-await': true,
       'dynamic-import': true,
-      'import-meta': true
+      'import-meta': true,
+      'class-fields': true,
+      'class-static-blocks': true,
+      'private-methods': true,
+      'private-properties': true
     }
   },
   server: {
