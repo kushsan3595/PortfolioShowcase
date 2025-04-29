@@ -10,11 +10,26 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Database connection
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
+// Database connection with retry logic
+const createPool = async (retries = 5, delay = 5000): Promise<typeof Pool> => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 2000,
+      });
+      await pool.query('SELECT NOW()');
+      return pool;
+    } catch (error) {
+      if (i === retries - 1) throw error;
+      log(`Database connection attempt ${i + 1} failed, retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+};
 
 // Error handling middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
@@ -54,9 +69,10 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  let pool: typeof Pool;
   try {
-    // Test database connection
-    await pool.query('SELECT NOW()');
+    // Initialize database connection with retry
+    pool = await createPool();
     log('Database connection established successfully');
 
     const server = await registerRoutes(app);
@@ -73,25 +89,25 @@ app.use((req, res, next) => {
       log(`Server is running on port ${PORT}`);
       log(`WebSocket server is running at ws://localhost:${PORT}/ws`);
     });
+
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+      log('SIGTERM received. Shutting down gracefully...');
+      pool.end(() => {
+        log('Database pool closed');
+        process.exit(0);
+      });
+    });
+
+    process.on('SIGINT', () => {
+      log('SIGINT received. Shutting down gracefully...');
+      pool.end(() => {
+        log('Database pool closed');
+        process.exit(0);
+      });
+    });
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
   }
 })();
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  log('SIGTERM received. Shutting down gracefully...');
-  pool.end(() => {
-    log('Database pool closed');
-    process.exit(0);
-  });
-});
-
-process.on('SIGINT', () => {
-  log('SIGINT received. Shutting down gracefully...');
-  pool.end(() => {
-    log('Database pool closed');
-    process.exit(0);
-  });
-});
