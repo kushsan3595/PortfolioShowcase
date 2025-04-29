@@ -67,7 +67,9 @@ export default defineConfig({
       format: 'esm',
       platform: 'browser',
       supported: {
-        'top-level-await': true
+        'top-level-await': true,
+        'dynamic-import': true,
+        'import-meta': true
       }
     }
   },
@@ -83,7 +85,9 @@ export default defineConfig({
     format: 'esm',
     platform: 'browser',
     supported: {
-      'top-level-await': true
+      'top-level-await': true,
+      'dynamic-import': true,
+      'import-meta': true
     }
   },
   server: {
