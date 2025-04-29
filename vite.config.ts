@@ -31,7 +31,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'react-vendor': ['react', 'react-dom'],
           'ui-vendor': [
             '@radix-ui/react-dialog',
             '@radix-ui/react-dropdown-menu',
@@ -53,7 +53,7 @@ export default defineConfig({
     cssCodeSplit: true
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', 'socket.io-client'],
+    include: ['react', 'react-dom', 'socket.io-client'],
     exclude: ['@shared']
   }
 });
