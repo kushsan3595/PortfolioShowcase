@@ -41,13 +41,15 @@ export default defineConfig({
     exclude: ["@shared/schema"],
     esbuildOptions: {
       loader: {
-        '.ts': 'ts'
+        '.ts': 'ts',
+        '.tsx': 'tsx'
       }
     }
   },
   esbuild: {
-    include: ["src/**/*.ts", "src/**/*.tsx", "../shared/**/*.ts"],
-    exclude: ["node_modules"]
+    include: /\.(ts|tsx)$/,
+    exclude: /node_modules/,
+    loader: 'tsx'
   },
   server: {
     port: 3000,
