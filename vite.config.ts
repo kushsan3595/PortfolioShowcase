@@ -1,21 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
 export default defineConfig({
-  plugins: [
-    react(),
-    runtimeErrorOverlay(),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer(),
-          ),
-        ]
-      : []),
-  ],
+  plugins: [react()],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
@@ -28,7 +16,6 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
-    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       input: {
         main: path.resolve(import.meta.dirname, "client", "index.html")
@@ -43,17 +30,11 @@ export default defineConfig({
             '@radix-ui/react-toast'
           ],
           'utils-vendor': ['zod', 'drizzle-orm', 'drizzle-zod']
-        },
-        chunkFileNames: 'assets/[name]-[hash].js',
-        entryFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]'
+        }
       }
     },
-    minify: 'terser',
     sourcemap: process.env.NODE_ENV === 'development',
     target: 'esnext',
-    cssCodeSplit: true,
-    reportCompressedSize: true,
     commonjsOptions: {
       include: [/node_modules/, /shared/]
     }
@@ -62,7 +43,6 @@ export default defineConfig({
     include: ['react', 'react-dom'],
     exclude: ['@shared'],
     esbuildOptions: {
-      target: 'esnext',
       loader: {
         '.ts': 'ts',
         '.tsx': 'tsx'
@@ -71,7 +51,6 @@ export default defineConfig({
   },
   server: {
     port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
-    host: '0.0.0.0',
-    strictPort: true
+    host: '0.0.0.0'
   }
 });
