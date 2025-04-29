@@ -4,7 +4,13 @@ import path from "path";
 
 export default defineConfig({
   root: 'client',
-  plugins: [react()],
+  plugins: [react({
+    babel: {
+      plugins: [
+        ['@babel/plugin-transform-react-jsx', { runtime: 'automatic' }]
+      ]
+    }
+  })],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "client/src"),
@@ -43,14 +49,17 @@ export default defineConfig({
       loader: {
         '.ts': 'ts',
         '.tsx': 'tsx'
-      }
+      },
+      jsx: 'automatic',
+      jsxDev: false
     }
   },
   esbuild: {
     include: /\.(ts|tsx)$/,
     exclude: /node_modules/,
     loader: 'tsx',
-    jsx: 'automatic'
+    jsx: 'automatic',
+    jsxDev: false
   },
   server: {
     port: 3000,
