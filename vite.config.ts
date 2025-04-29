@@ -39,7 +39,6 @@ export default defineConfig({
             '@radix-ui/react-toast'
           ],
           'utils-vendor': ['zod', 'drizzle-orm', 'drizzle-zod'],
-          'socket-vendor': ['socket.io-client'],
           'shared': ['@shared']
         },
         chunkFileNames: 'assets/[name]-[hash].js',
@@ -53,7 +52,7 @@ export default defineConfig({
     cssCodeSplit: true
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'socket.io-client'],
+    include: ['react', 'react-dom'],
     exclude: ['@shared']
   }
 });
